@@ -111,7 +111,7 @@ int check_gear(char **file, int x, int y){
                     dup = true;
             if(!dup) {
                 numbers[i] = number;
-                printf("At (%d, %d): %c, nmbr: %d\n", new_x, new_y, file[new_x][new_y], number);
+                //printf("At (%d, %d): %c, nmbr: %d\n", new_x, new_y, file[new_x][new_y], number);
             }
         }
         //else {
@@ -136,9 +136,9 @@ int check_gear(char **file, int x, int y){
     }
     if (num_cnt != 2)
         num_mul = 0;
-    else
-        printf("mul: %d\n", num_mul);
-    printf("\n");
+    //else
+    //    printf("mul: %d\n", num_mul);
+    //printf("\n");
     return num_mul;
 }
 
