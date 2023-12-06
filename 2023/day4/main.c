@@ -7,10 +7,13 @@
 #include <stdbool.h>
 
 #define LENGTH 150
-#define POSSES 2000
+
+#define ROWS 190
+#define LEN_WINNING 10 
+#define LEN_GAME 25 
 
 
-//const char file[] = "input_stan.txt";
+//const char file[] = "test.txt";
 const char file[] = "input.txt";
 
 static int rows = 0;
@@ -31,47 +34,58 @@ void get_numbers(char *part, int *numbers){
         if (strstr(token, ":") == NULL && strstr(token, "Card") == NULL ){
             numbers[count++] = atoi(token);
         }
-        //printf("token: %s\n", token);
         token = strtok(NULL, " ");
     }
 }
 
-int get_points(char *file){
+void get_cards(char *file, int *winning_nmbrs, int *nmbrs){
     char *part1 = strtok(file, "|");
     char *part2 = strtok(NULL, "|");
-    printf("part1: %s\n", part1);
-    printf("part2: %s\n", part2);
-
-    int winning_nmbrs[10] = {0};
-    int nmbrs[25] = {0};
 
     get_numbers(part1, winning_nmbrs);
     get_numbers(part2, nmbrs);
-    printf("winning: ");
-    for(int i =0; i < 10; i++){
-        printf("%d, ", winning_nmbrs[i]);
-    }
-    printf("\nreceived: ");
-    for(int i =0; i < 25; i++){
-        printf("%d, ", nmbrs[i]);
-    }
-    printf("\n");
+}
 
+int get_points(int *winning_nmbrs, int *nmbrs){
+    int dups[10] = {0};
     int amount = 0;
-    for (int i = 0; i < 10; i++){
-        for (int j = 0; j < 25; j++){
+    for (int i = 0; i < LEN_WINNING; i++){
+        for (int j = 0; j < LEN_GAME; j++){
             if(winning_nmbrs[i] == nmbrs[j]){
+                dups[amount] = amount+1;
                 amount++;
-                printf("Found winning number: %d!\n", nmbrs[j]);
             }
         }
     }
     int points = 1<<(amount-1);
     if (points < 0)
         points = 0;
-    printf("Points: %d\n", points);
+
     return points;
 }
+
+void get_matching(int *card_points, int *card, int *winning_nmbrs, int *nmbrs, int count){
+    //int dups[10] = {0};
+    int amount = 0;
+    for (int i = 0; i < LEN_WINNING; i++){
+        for (int j = 0; j < LEN_GAME; j++){
+            if(winning_nmbrs[i] == nmbrs[j]){
+                card_points[*card] = amount +1 + count;
+                printf("[%d] add point to card: %d\n", *card, amount +1 + count);
+                *card = *card + 1;
+                //dups[amount-1] = amount+1;
+                amount++;
+            }
+        }
+    }
+
+    //for(int i = 0; i < amount; i++){
+    //    printf("%d | ", dups[i]);
+    //}
+    //printf("\namount: %d\n\n",amount);
+}
+
+
 
 int main(){
     FILE *fp;
@@ -88,12 +102,12 @@ int main(){
     file_size = ftell(fp);
     fseek(fp, 0L, SEEK_SET);
     
-    char **file = (char**) malloc(file_size);
+    char **file = (char**) calloc(file_size, sizeof(char));
 
-    printf("file is: %ld long\n", file_size);
+    printf("file is: %ld Bytes large\n", file_size);
     while(fgets(line, file_size, fp) != NULL){
-        file[rows] = malloc(strlen(line) -1);
-        strncpy(file[rows++], line, strlen(line) - 1);
+        file[rows] = malloc(strlen(line) );
+        strncpy(file[rows++], line, strlen(line) );
         if (columns == 0){
             columns = strlen(line) -1;
         }
@@ -101,10 +115,50 @@ int main(){
     fclose(fp);
     printf("rows: %d, columns: %d\n", rows, columns);
 
+    int winning_nmbrs[ROWS][LEN_WINNING] = {0};
+    int nmbrs[ROWS][LEN_GAME] = {0};
+
+
+    //rows = 4;
     for (int i = 0; i < rows; i++){
-        sum += get_points(file[i]);
+        get_cards(file[i], winning_nmbrs[i], nmbrs[i]);
+        sum += get_points(winning_nmbrs[i], nmbrs[i]);
     }
     printf("sum: %llu\n", sum);
+
+
+    int card = 6;
+    int cards[100000] = {0};
+    cards[0] = 0; // actually card 1
+    cards[1] = 1;
+    cards[2] = 2;
+    cards[3] = 3;
+    cards[4] = 4;
+    cards[5] = 5; //actually card 6
+
+    int count = 0;
+    while(true){
+        int current_card = cards[count];
+        if (count > 0 && current_card == 0)
+            break;
+        printf("current card: %d\n", current_card); 
+        get_matching(cards, &card, winning_nmbrs[current_card], nmbrs[current_card], current_card);
+        count++;
+    }
+
+
+    int cart_count[6] = {0};
+    for(int i =0; i < 100000; i++){
+        printf("[%d] points: %d\n", i+1, cards[i]);
+        cart_count[cards[i]]++;
+    }
+    cart_count[0] = 1;
+    sum = 0;
+    for(int i =0; i < 6; i++){
+        printf("[%d], count: %d\n", i, cart_count[i]);
+        sum+= cart_count[i];
+    }
+    printf("part2 sum: %llu\n", sum);
 
 
     for (int i = 0; i < rows; i++)
