@@ -12,6 +12,9 @@
 #define LEN_WINNING 10 
 #define LEN_GAME 25 
 
+//#define ROWS 6
+//#define LEN_WINNING 5 
+//#define LEN_GAME 8 
 
 //const char file[] = "test.txt";
 const char file[] = "input.txt";
@@ -19,6 +22,13 @@ const char file[] = "input.txt";
 static int rows = 0;
 static int columns = 0;
 
+
+struct Cards{
+    int game_id;
+    int matches;
+    //int win_nums;
+    //int game_nums;
+};
 
 int get_int_len (int value){
     int l=1;
@@ -64,25 +74,17 @@ int get_points(int *winning_nmbrs, int *nmbrs){
     return points;
 }
 
-void get_matching(int *card_points, int *card, int *winning_nmbrs, int *nmbrs, int count){
-    //int dups[10] = {0};
-    int amount = 0;
+void get_matching(struct Cards *card, int *win_nums, int *game_nums){
+    int matches = 0;
     for (int i = 0; i < LEN_WINNING; i++){
         for (int j = 0; j < LEN_GAME; j++){
-            if(winning_nmbrs[i] == nmbrs[j]){
-                card_points[*card] = amount +1 + count;
-                printf("[%d] add point to card: %d\n", *card, amount +1 + count);
-                *card = *card + 1;
-                //dups[amount-1] = amount+1;
-                amount++;
+            //printf("%d ", card->win_nums[i]);
+            if(win_nums[i] == game_nums[j]){
+                matches++;
             }
         }
     }
-
-    //for(int i = 0; i < amount; i++){
-    //    printf("%d | ", dups[i]);
-    //}
-    //printf("\namount: %d\n\n",amount);
+    card->matches = matches;
 }
 
 
@@ -114,52 +116,45 @@ int main(){
     }
     fclose(fp);
     printf("rows: %d, columns: %d\n", rows, columns);
-
-    int winning_nmbrs[ROWS][LEN_WINNING] = {0};
-    int nmbrs[ROWS][LEN_GAME] = {0};
+    int win_nums[ROWS][LEN_WINNING] = {0};
+    int game_nums[ROWS][LEN_GAME] = {0};
 
 
     //rows = 4;
     for (int i = 0; i < rows; i++){
-        get_cards(file[i], winning_nmbrs[i], nmbrs[i]);
-        sum += get_points(winning_nmbrs[i], nmbrs[i]);
+        get_cards(file[i], win_nums[i], game_nums[i]);
+        sum += get_points(win_nums[i], game_nums[i]);
     }
-    printf("sum: %llu\n", sum);
+    printf("Part1 sum: %lu\n", sum);
 
-
-    int card = 6;
-    int cards[100000] = {0};
-    cards[0] = 0; // actually card 1
-    cards[1] = 1;
-    cards[2] = 2;
-    cards[3] = 3;
-    cards[4] = 4;
-    cards[5] = 5; //actually card 6
-
-    int count = 0;
-    while(true){
-        int current_card = cards[count];
-        if (count > 0 && current_card == 0)
-            break;
-        printf("current card: %d\n", current_card); 
-        get_matching(cards, &card, winning_nmbrs[current_card], nmbrs[current_card], current_card);
+    uint64_t card_size = rows;
+    struct Cards *cards = malloc(sizeof(*cards) * card_size);
+    printf("size: %ld\n", sizeof(cards) * card_size);
+    for(int i = 0; i<rows; i++){
+        struct Cards *card = &cards[i];
+        card->game_id = i+1;
+        get_matching(card, win_nums[i], game_nums[i]);
+        printf("card: [%d], matches: %d\n", card->game_id, card->matches);
+    }
+    uint64_t count = 0;
+    int point = card_size;
+    while (true){
+        struct Cards card = cards[count];
+        uint64_t old_size = card_size;
+        card_size += card.matches;
+        cards = realloc(cards, sizeof(*cards)* card_size);
+        for(int i = card.game_id; i< card.game_id + card.matches; i++){
+            cards[point].game_id = cards[i].game_id;
+            cards[point].matches = cards[i].matches;
+            point++;
+        }
         count++;
+        if (count == card_size)
+            break;
     }
+    printf("\ncards: %ld, count: %ld, point: %d\n", card_size, count, point);
 
-
-    int cart_count[6] = {0};
-    for(int i =0; i < 100000; i++){
-        printf("[%d] points: %d\n", i+1, cards[i]);
-        cart_count[cards[i]]++;
-    }
-    cart_count[0] = 1;
-    sum = 0;
-    for(int i =0; i < 6; i++){
-        printf("[%d], count: %d\n", i, cart_count[i]);
-        sum+= cart_count[i];
-    }
-    printf("part2 sum: %llu\n", sum);
-
+    free(cards);
 
     for (int i = 0; i < rows; i++)
         free(file[i]);
