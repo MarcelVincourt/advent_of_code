@@ -44,7 +44,7 @@ bool increaseAndDecrease(int *numbers, int len){
             diff *= -1;
             increasing++;
         }
-        else if (diff > 0)
+        else if (diff > 0 && diff < 4)
             decreasing++;
         else
             doubles++;
