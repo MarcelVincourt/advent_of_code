@@ -16,17 +16,75 @@ enum LEFTRIGHT{
     RIGHT
 };
 
-unsigned int leftColumn[NUMBERS];
-unsigned int rightColumn[NUMBERS];
-unsigned int diffList[NUMBERS];
+
+int compAsc(const void *a, const void *b){
+    return (*(int*)a - *(int*)b);
+}
+
+int compDesc(const void *a, const void *b){
+    return (*(int*)b - *(int*)a);
+}
+
+void printNumbers(int *numbers, int len){
+    for(int i=0; i<len; i++){
+        printf("%d ", numbers[i]);
+    }
+    printf("\n");
+}
+
+
+bool isGood(int *numbers, int len){
+    int newNumbers[20] = {};
+    bool increase = false;
+    bool decrease = false;
+    bool incOrDec = false;
+    memcpy(newNumbers, numbers, len*sizeof(len));
+    qsort(newNumbers, len, sizeof(int), compAsc);
+    memcmp(newNumbers, numbers, len) == 0 ? increase = true : false;
+    printf("increase: %d\norigi: ", increase);
+    for(int i=0; i<len; i++){
+        printf("%d ", numbers[i]);
+    }
+    printf("\nnew:  ");
+    for(int i=0; i<len; i++){
+        printf("%d ", newNumbers[i]);
+    }
+    printf("\n");
+
+    memcpy(newNumbers, numbers, len*sizeof(len));
+    qsort(newNumbers, len, sizeof(int), compDesc);
+    memcmp(newNumbers, numbers, len) == 0 ? decrease = true : false;
+    printf("decrease: %d\norigi: ", decrease);
+    for(int i=0; i<len; i++){
+        printf("%d ", numbers[i]);
+    }
+    printf("\nnew:  ");
+    for(int i=0; i<len; i++){
+        printf("%d ", newNumbers[i]);
+    }
+    printf("\n");
+    incOrDec = increase || decrease;
+    printf("incOrDec: %d\n\n", incOrDec);
+
+    int diff = 0;
+    bool ok = true;
+    for(int i=0; i<len-1; i++){
+        diff = abs(numbers[i] - numbers[i+1]);
+        if (diff < 1 || diff > 3) {
+            ok = false;
+            break;
+        }
+        
+    }
+    incOrDec = true;
+    return incOrDec && ok;
+}
 
 bool diffToLarge(int *numbers, int len){
     int diff = 0;
     for(int i=0; i<len-1; i++){
-        diff = numbers[i] - numbers[i+1];
-        if (diff < 0) 
-            diff *= -1;
-        if (diff > 3)
+        diff = abs(numbers[i] - numbers[i+1]);
+        if (diff < 1 || diff > 3)
             return true;
     }
     return false;
@@ -35,7 +93,6 @@ bool diffToLarge(int *numbers, int len){
 bool increaseAndDecrease(int *numbers, int len){
     int increasing = 0;
     int decreasing = 0;
-    int doubles = 0;
     int diff = 0;
     int diffToLarge = 0;
     for(int i=0; i<len-1; i++){
@@ -46,100 +103,15 @@ bool increaseAndDecrease(int *numbers, int len){
         }
         else if (diff > 0 && diff < 4)
             decreasing++;
-        else
-            doubles++;
-
-        if (diff > 3)
-            diffToLarge++;
     }
-    if(increasing > 1 && decreasing > 1)
-        return true;
-    if (increasing && decreasing && doubles)
-        return true;
-    if (doubles > 1)
-        return true;
-    if (increasing && decreasing && diffToLarge)
-        return true;
-    if (diffToLarge > 1)
-        return true;
-    if (doubles && diffToLarge)
+    if(increasing && decreasing )
         return true;
     return false;
 }
 
-bool findDouble(int *numbers, int len){
-    int diff = 0;
-    int doubles = 0;
-    int doubleIndex = 0;
-    for(int i=0; i<len-1; i++){
-        diff = numbers[i] - numbers[i+1];
-        if (diff == 0) {
-            doubles++;
-            if (doubles == 1)
-                doubleIndex = i;
-        }
-    }
-    // if there are more than 2 doubles set all to 0 because it is an invalid input
-    if (doubles > 1){
-        return false;
-    }
-    else if (doubles == 1)
-    {
-        // set the index of the first double to 0xFF so we can see later that this is a changed value
-        numbers[doubleIndex] = 0xFF;
-    }
-    return true;
-}
-
-void problemDampener(int *numbers, int len){
-    //if (isValid && ffFound){
-    FILE *fp;
-    fp = fopen("diff2", "a");
-    for(int i=0; i<len; i++){
-        printf("%d ", numbers[i]);
-        fprintf(fp, "%d ", numbers[i]);
-    }
-    fprintf(fp, "\n");
-    fclose(fp);
-    printf("\n");
-}
-
-bool validIncreasing(int *numbers, int len){
-    int diff = 0;
-    bool increasing = false;
-    bool decreasing = false;
-    for(int i=0; i<len-1; i++){
-        diff = numbers[i] - numbers[i+1];
-        if (diff < 0) {
-            decreasing = true;
-        } else {
-            increasing = true;
-        }
-    }
-    //printf("increase: %d, decreasing: %d\n", increasing, decreasing);
-    if (increasing & decreasing)
-        return false;
-    return true;
-}
 
 
-bool isSafe(int *numbers, int len){
-    int diff = 0;
-    bool isValid = true;
-    for(int i=0; i<len-1; i++){
-        diff = numbers[i] - numbers[i+1];
-        if (diff < 0) {
-            diff *= -1;
-        }
 
-        if (diff > 3 || diff == 0) isValid = false;
-        //printf("%d - %d = %d, diff: %d\n", numbers[i], numbers[i+1]diff);
-    }
-    //for(int i=0; i<len; i++)
-    //    printf("%d ", numbers[i]);
-    //printf(" \t\tvalid: %d\n", isValid);
-    return isValid;
-} 
 
 void readFile(void){
     FILE *fp;
@@ -165,23 +137,33 @@ void readFile(void){
             pch = strtok(NULL, " ");
         }
 
-        //if (diffToLarge(numbers, count))
-        //    continue;
-        if (increaseAndDecrease(numbers, count))
-            continue;
-        //if (!findDouble(numbers, count))
-        //    continue;
-        problemDampener(numbers, count);
-        validCount2++;
+        if (!diffToLarge(numbers, count) && !increaseAndDecrease(numbers, count))
+            validCount++;
 
-        //if (!validIncreasing(numbers, count))
-        //    continue;
-        //if (isSafe(numbers, count))
-        //    validCount++;
-        for(int i = 0; i<1024; i++)
-            line[i] = 0;
+        int newNumbers[20] = {};
+        for(int indexToSkip=0; indexToSkip<count; indexToSkip++){
+            int index = 0;
+            for (int j=0; j<count; j++){
+                if (indexToSkip != j){
+                    newNumbers[index] = numbers[j];
+                    index++;
+                }
+            }
+            //printNumbers(newNumbers, count-1);
+            //printNumbers(numbers, count);
+            //printf("\n");
+            if (!diffToLarge(newNumbers, index) && !increaseAndDecrease(newNumbers, index)) {
+                validCount2++;
+                break;
+            }
+            
+        }
+        //break;
+        //if (!diffToLarge(newNumbers, count-1) && !increaseAndDecrease(newNumbers, count-1))
+        //    validCount2++;
+
     }
-    //printf("Found: %d valid rows\n", validCount);
+    printf("Found: %d valid rows\n", validCount);
     printf("2Found: %d valid rows\n", validCount2);
     fclose(fp);
 }
